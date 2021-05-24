@@ -3260,6 +3260,26 @@ s32 e1000_get_phy_info_82577(struct e1000_hw *hw)
 	if (data & LPA_1000FULL)
 		phy->autoneg_lp_advertised |= ADVERTISED_1000baseT_Full;
 
+	phy->local_master = !!(data & LPA_1000MSRES);
+
+	ret_val = e1e_rphy(hw, I82577_PHY_DIAG_STATUS, &data);
+	if (ret_val)
+		return ret_val;
+
+	phy->pair_cd_swapped = !!(data & I82577_DSTATUS_PAIRS_CD_SWAPPED);
+	phy->pair_a_polarity = ((data & I82577_DSTATUS_PAIR_A_REV_POLARITY)
+				? e1000_rev_polarity_reversed
+				: e1000_rev_polarity_normal);
+	phy->pair_b_polarity = ((data & I82577_DSTATUS_PAIR_B_REV_POLARITY)
+				? e1000_rev_polarity_reversed
+				: e1000_rev_polarity_normal);
+	phy->pair_c_polarity = ((data & I82577_DSTATUS_PAIR_C_REV_POLARITY)
+				? e1000_rev_polarity_reversed
+				: e1000_rev_polarity_normal);
+	phy->pair_d_polarity = ((data & I82577_DSTATUS_PAIR_D_REV_POLARITY)
+				? e1000_rev_polarity_reversed
+				: e1000_rev_polarity_normal);
+
 	return 0;
 }
 

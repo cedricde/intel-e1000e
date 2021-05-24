@@ -6720,6 +6720,7 @@ static inline dma_addr_t __kc_xdp_umem_get_dma(struct xdp_umem *umem, u64 addr)
 
 #define xdp_umem_get_dma __kc_xdp_umem_get_dma
 #endif /* !xdp_umem_get_dma */
+#define HAVE_ETHTOOL_OPS_GET_PHY_STATS
 #endif /* 4.18.0 */
 
 /*****************************************************************************/
@@ -7101,5 +7102,13 @@ static inline void skb_frag_off_add(skb_frag_t * frag, int delta)
 #else /* >= 5.6.0 */
 #define HAVE_TX_TIMEOUT_TXQUEUE
 #endif /* 5.6.0 */
+
+/*****************************************************************************/
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5,8,0))
+/* 1000BASE-T Status register */
+#ifndef LPA_1000MSRES
+#define LPA_1000MSRES		0x4000	/* Master/Slave resolution status */
+#endif
+#endif /* 5.8.0 */
 
 #endif /* _KCOMPAT_H_ */

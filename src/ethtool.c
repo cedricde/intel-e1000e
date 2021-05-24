@@ -146,6 +146,21 @@ static const char e1000_gstrings_test[][ETH_GSTRING_LEN] = {
 
 #define E1000_TEST_LEN ARRAY_SIZE(e1000_gstrings_test)
 
+#ifdef HAVE_ETHTOOL_OPS_GET_PHY_STATS
+static const char e1000_gstrings_phy_stats[][ETH_GSTRING_LEN] = {
+	"Local PHY is master",
+	"Pairs A and B swapped",
+	"Pairs C and D swapped",
+	"Inverted polarity (10BASE-T)",
+	"Pair A polarity inverted (GbE)",
+	"Pair B polarity inverted (GbE)",
+	"Pair C polarity inverted (GbE)",
+	"Pair D polarity inverted (GbE)",
+	"Cable length (m)",
+};
+#define E1000_PHY_STATS_LEN ARRAY_SIZE(e1000_gstrings_phy_stats)
+#endif
+
 #ifdef HAVE_ETHTOOL_CONVERT_U32_AND_LINK_MODE
 static int e1000_get_link_ksettings(struct net_device *netdev,
 				    struct ethtool_link_ksettings *cmd)
@@ -2147,14 +2162,29 @@ static int e1000_link_test(struct e1000_adapter *adapter, u64 *data)
 }
 
 #ifdef HAVE_ETHTOOL_GET_SSET_COUNT
-static int e1000e_get_sset_count(struct net_device __always_unused *netdev,
-				 int sset)
+static int e1000e_get_sset_count(struct net_device *netdev, int sset)
 {
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	struct e1000_hw *hw = &adapter->hw;
+
 	switch (sset) {
 	case ETH_SS_TEST:
 		return E1000_TEST_LEN;
 	case ETH_SS_STATS:
 		return E1000_STATS_LEN;
+
+#ifdef HAVE_ETHTOOL_OPS_GET_PHY_STATS
+	case ETH_SS_PHY_STATS:
+		switch (hw->phy.type) {
+		case e1000_phy_82577:
+		case e1000_phy_82579:
+		case e1000_phy_i217:
+			return E1000_PHY_STATS_LEN;
+		default:
+			return -EOPNOTSUPP;
+		}
+#endif
+
 	default:
 		return -EOPNOTSUPP;
 	}
@@ -2548,6 +2578,37 @@ static void e1000_get_ethtool_stats(struct net_device *netdev,
 	}
 }
 
+#ifdef HAVE_ETHTOOL_OPS_GET_PHY_STATS
+static void e1000_get_ethtool_phy_stats(struct net_device *netdev,
+					struct ethtool_stats *stats, u64 *data)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	struct e1000_hw *hw = &adapter->hw;
+	struct e1000_phy_info *phy = &hw->phy;
+
+	switch (min((u32)E1000_PHY_STATS_LEN, stats->n_stats)) {
+	case 9:
+		data[8] = phy->cable_length;
+	case 8:
+		data[7] = phy->pair_d_polarity;
+	case 7:
+		data[6] = phy->pair_c_polarity;
+	case 6:
+		data[5] = phy->pair_b_polarity;
+	case 5:
+		data[4] = phy->pair_a_polarity;
+	case 4:
+		data[3] = phy->cable_polarity;
+	case 3:
+		data[2] = (phy->pair_cd_swapped ? 1 : 0);
+	case 2:
+		data[1] = (phy->is_mdix ? 1 : 0);
+	case 1:
+		data[0] = (phy->local_master ? 1 : 0);
+	}
+}
+#endif /* HAVE_ETHTOOL_OPS_GET_PHY_STATS */
+
 static void e1000_get_strings(struct net_device __always_unused *netdev,
 			      u32 stringset, u8 *data)
 {
@@ -2565,6 +2626,13 @@ static void e1000_get_strings(struct net_device __always_unused *netdev,
 			p += ETH_GSTRING_LEN;
 		}
 		break;
+
+#ifdef HAVE_ETHTOOL_OPS_GET_PHY_STATS
+	case ETH_SS_PHY_STATS:
+		memcpy(data, e1000_gstrings_phy_stats,
+		       sizeof(e1000_gstrings_phy_stats));
+		break;
+#endif
 	}
 }
 
@@ -2871,6 +2939,9 @@ static const struct ethtool_ops e1000_ethtool_ops = {
 	.get_link_ksettings     = e1000_get_link_ksettings,
 	.set_link_ksettings     = e1000_set_link_ksettings,
 #endif /* HAVE_ETHTOOL_CONVERT_U32_AND_LINK_MODE */
+#ifdef HAVE_ETHTOOL_OPS_GET_PHY_STATS
+	.get_ethtool_phy_stats	= e1000_get_ethtool_phy_stats,
+#endif
 };
 
 #ifdef HAVE_RHEL6_ETHTOOL_OPS_EXT_STRUCT
