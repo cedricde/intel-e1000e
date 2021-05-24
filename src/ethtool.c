@@ -153,6 +153,7 @@ static int e1000_get_link_ksettings(struct net_device *netdev,
 	struct e1000_adapter *adapter = netdev_priv(netdev);
 	struct e1000_hw *hw = &adapter->hw;
 	u32 speed, supported, advertising;
+	u32 lp_advertising = 0;
 
 	if (hw->phy.media_type == e1000_media_type_copper) {
 		supported = (SUPPORTED_10baseT_Half |
@@ -194,6 +195,13 @@ static int e1000_get_link_ksettings(struct net_device *netdev,
 		if (netif_carrier_ok(netdev)) {
 			speed = adapter->link_speed;
 			cmd->base.duplex = adapter->link_duplex - 1;
+
+			if (hw->mac.autoneg) {
+				lp_advertising = (hw->phy.media_type == e1000_media_type_copper)
+				                 ? ADVERTISED_TP
+				                 : ADVERTISED_FIBRE;
+				lp_advertising |= hw->phy.autoneg_lp_advertised;
+			}
 		}
 	} else if (!pm_runtime_suspended((netdev_to_dev(netdev))->parent)) {
 		u32 status = er32(STATUS);
@@ -242,6 +250,8 @@ static int e1000_get_link_ksettings(struct net_device *netdev,
 						supported);
 	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.advertising,
 						advertising);
+	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.lp_advertising,
+						lp_advertising);
 
 	return 0;
 }
@@ -296,6 +306,15 @@ static int e1000_get_settings(struct net_device *netdev,
 		if (netif_carrier_ok(netdev)) {
 			speed = adapter->link_speed;
 			ecmd->duplex = adapter->link_duplex - 1;
+
+#ifdef HAVE_ETHTOOL_CMD_LP_ADVERTISING
+			if (hw->mac.autoneg) {
+				ecmd->lp_advertising = (hw->phy.media_type == e1000_media_type_copper)
+				                       ? ADVERTISED_TP
+				                       : ADVERTISED_FIBRE;
+				ecmd->lp_advertising |= hw->phy.autoneg_lp_advertised;
+			}
+#endif /* HAVE_ETHTOOL_LP_ADVERTISING */
 		}
 	} else if (!pm_runtime_suspended((netdev_to_dev(netdev))->parent)) {
 		u32 status = er32(STATUS);

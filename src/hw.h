@@ -637,6 +637,7 @@ struct e1000_phy_info {
 
 	u16 autoneg_advertised;
 	u16 autoneg_mask;
+	u16 autoneg_lp_advertised;
 	u16 cable_length;
 	u16 max_cable_length;
 	u16 min_cable_length;

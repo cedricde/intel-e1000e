@@ -1938,6 +1938,41 @@ s32 e1000e_get_phy_info_m88(struct e1000_hw *hw)
 		phy->remote_rx = e1000_1000t_rx_status_undefined;
 	}
 
+	ret_val = e1e_rphy(hw, MII_LPA, &phy_data);
+	if (ret_val)
+		return ret_val;
+
+	phy->autoneg_lp_advertised = 0;
+
+	if (phy_data & LPA_10HALF)
+		phy->autoneg_lp_advertised |= ADVERTISED_10baseT_Half;
+	if (phy_data & LPA_10FULL)
+		phy->autoneg_lp_advertised |= ADVERTISED_10baseT_Full;
+	if (phy_data & LPA_100HALF)
+		phy->autoneg_lp_advertised |= ADVERTISED_100baseT_Half;
+	if (phy_data & LPA_100FULL)
+		phy->autoneg_lp_advertised |= ADVERTISED_100baseT_Full;
+	if (phy_data & LPA_PAUSE_CAP)
+		phy->autoneg_lp_advertised |= ADVERTISED_Pause;
+	if (phy_data & LPA_PAUSE_ASYM)
+		phy->autoneg_lp_advertised |= ADVERTISED_Asym_Pause;
+
+	ret_val = e1e_rphy(hw, MII_EXPANSION, &phy_data);
+	if (ret_val)
+		return ret_val;
+
+	if (phy_data & EXPANSION_NWAY)
+		phy->autoneg_lp_advertised |= ADVERTISED_Autoneg;
+
+	ret_val = e1e_rphy(hw, MII_STAT1000, &phy_data);
+	if (ret_val)
+		return ret_val;
+
+	if (phy_data & LPA_1000HALF)
+		phy->autoneg_lp_advertised |= ADVERTISED_1000baseT_Half;
+	if (phy_data & LPA_1000FULL)
+		phy->autoneg_lp_advertised |= ADVERTISED_1000baseT_Full;
+
 	return ret_val;
 }
 
@@ -3189,6 +3224,41 @@ s32 e1000_get_phy_info_82577(struct e1000_hw *hw)
 		phy->local_rx = e1000_1000t_rx_status_undefined;
 		phy->remote_rx = e1000_1000t_rx_status_undefined;
 	}
+
+	ret_val = e1e_rphy(hw, MII_LPA, &data);
+	if (ret_val)
+		return ret_val;
+
+	phy->autoneg_lp_advertised = 0;
+
+	if (data & LPA_10HALF)
+		phy->autoneg_lp_advertised |= ADVERTISED_10baseT_Half;
+	if (data & LPA_10FULL)
+		phy->autoneg_lp_advertised |= ADVERTISED_10baseT_Full;
+	if (data & LPA_100HALF)
+		phy->autoneg_lp_advertised |= ADVERTISED_100baseT_Half;
+	if (data & LPA_100FULL)
+		phy->autoneg_lp_advertised |= ADVERTISED_100baseT_Full;
+	if (data & LPA_PAUSE_CAP)
+		phy->autoneg_lp_advertised |= ADVERTISED_Pause;
+	if (data & LPA_PAUSE_ASYM)
+		phy->autoneg_lp_advertised |= ADVERTISED_Asym_Pause;
+
+	ret_val = e1e_rphy(hw, MII_EXPANSION, &data);
+	if (ret_val)
+		return ret_val;
+
+	if (data & EXPANSION_NWAY)
+		phy->autoneg_lp_advertised |= ADVERTISED_Autoneg;
+
+	ret_val = e1e_rphy(hw, MII_STAT1000, &data);
+	if (ret_val)
+		return ret_val;
+
+	if (data & LPA_1000HALF)
+		phy->autoneg_lp_advertised |= ADVERTISED_1000baseT_Half;
+	if (data & LPA_1000FULL)
+		phy->autoneg_lp_advertised |= ADVERTISED_1000baseT_Full;
 
 	return 0;
 }

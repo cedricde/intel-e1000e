@@ -1133,7 +1133,13 @@ int _kc_is_valid_ether_addr(u8 *addr);
 #define ADVERTISE_100FULL       0x0100	/* Try for 100mbps full-duplex */
 #define ADVERTISE_ALL (ADVERTISE_10HALF | ADVERTISE_10FULL | \
                        ADVERTISE_100HALF | ADVERTISE_100FULL)
+/* Link partner ability register. */
+#define LPA_10HALF              0x0020	/* Can do 10mbps half-duplex   */
+#define LPA_10FULL              0x0040	/* Can do 10mbps full-duplex   */
+#define LPA_100HALF             0x0080	/* Can do 100mbps half-duplex  */
+#define LPA_100FULL             0x0100	/* Can do 100mbps full-duplex  */
 /* Expansion register for auto-negotiation. */
+#define EXPANSION_NWAY          0x0001	/* Can do N-way auto-nego      */
 #define EXPANSION_ENABLENPAGE   0x0004	/* This enables npage words    */
 #endif
 
@@ -2048,6 +2054,8 @@ static inline unsigned long _kc_usecs_to_jiffies(const unsigned int m)
 /* 1000BASE-T Status register */
 #define LPA_1000LOCALRXOK	0x2000	/* Link partner local receiver status */
 #define LPA_1000REMRXOK		0x1000	/* Link partner remote receiver status */
+#define LPA_1000FULL		0x0800	/* Link partner 1000BASE-T full duplex */
+#define LPA_1000HALF		0x0400	/* Link partner 1000BASE-T half duplex */
 
 #ifndef is_zero_ether_addr
 #define is_zero_ether_addr _kc_is_zero_ether_addr
@@ -3145,6 +3153,10 @@ static inline unsigned long dev_trans_start(struct net_device *dev)
 #define HAVE_INCLUDE_LINUX_MDIO_H
 #endif
 #include <linux/mdio.h>
+
+#ifndef HAVE_ETHTOOL_CMD_LP_ADVERTISING
+#define HAVE_ETHTOOL_CMD_LP_ADVERTISING
+#endif
 #endif /* < 2.6.31 */
 
 /*****************************************************************************/
@@ -6394,6 +6406,7 @@ struct _kc_bpf_prog {
  * @link_modes: supported and advertising, single item arrays
  * @link_modes.supported: bitmask of supported link speeds
  * @link_modes.advertising: bitmask of currently advertised speeds
+ * @link_modes.lp_advertising: bitmask of partner advertised speeds
  * @base: base link details
  * @base.speed: current link speed
  * @base.port: current port type
@@ -6417,6 +6430,7 @@ struct ethtool_link_ksettings {
 	struct {
 		unsigned long supported[ETHTOOL_LINK_MASK_SIZE];
 		unsigned long advertising[ETHTOOL_LINK_MASK_SIZE];
+		unsigned long lp_advertising[ETHTOOL_LINK_MASK_SIZE];
 	} link_modes;
 };
 
