@@ -2586,26 +2586,24 @@ static void e1000_get_ethtool_phy_stats(struct net_device *netdev,
 	struct e1000_hw *hw = &adapter->hw;
 	struct e1000_phy_info *phy = &hw->phy;
 
-	switch (min((u32)E1000_PHY_STATS_LEN, stats->n_stats)) {
-	case 9:
+	if (stats->n_stats > 8)
 		data[8] = phy->cable_length;
-	case 8:
+	if (stats->n_stats > 7)
 		data[7] = phy->pair_d_polarity;
-	case 7:
+	if (stats->n_stats > 6)
 		data[6] = phy->pair_c_polarity;
-	case 6:
+	if (stats->n_stats > 5)
 		data[5] = phy->pair_b_polarity;
-	case 5:
+	if (stats->n_stats > 4)
 		data[4] = phy->pair_a_polarity;
-	case 4:
+	if (stats->n_stats > 3)
 		data[3] = phy->cable_polarity;
-	case 3:
+	if (stats->n_stats > 2)
 		data[2] = (phy->pair_cd_swapped ? 1 : 0);
-	case 2:
+	if (stats->n_stats > 1)
 		data[1] = (phy->is_mdix ? 1 : 0);
-	case 1:
+	if (stats->n_stats > 0)
 		data[0] = (phy->local_master ? 1 : 0);
-	}
 }
 #endif /* HAVE_ETHTOOL_OPS_GET_PHY_STATS */
 
