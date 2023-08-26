@@ -41,6 +41,16 @@
 		     + __GNUC_PATCHLEVEL__)
 #endif /* GCC_VERSION */
 
+#ifdef __has_attribute
+#if __has_attribute(__fallthrough__)
+# define fallthrough __attribute__((__fallthrough__))
+#else
+# define fallthrough do {} while (0)  /* fallthrough */
+#endif /* __has_attribute(fallthrough) */
+#else
+# define fallthrough do {} while (0)  /* fallthrough */
+#endif /* __has_attribute */
+
 /* Backport macros for controlling GCC diagnostics */
 #if ( LINUX_VERSION_CODE < KERNEL_VERSION(4,18,0) )
 
@@ -7270,5 +7280,48 @@ static inline struct devlink_region *_kc_devlink_region_create(struct devlink
 #else /* >= 5.8.0 */
 #undef HAVE_AF_XDP_ZC_SUPPORT
 #endif /* 5.8.0 */
+
+/*****************************************************************************/
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5,15,0))
+#ifndef eth_hw_addr_set
+static inline void __kc_eth_hw_addr_set(struct net_device *dev, const u8 *addr)
+{
+	ether_addr_copy(dev->dev_addr, addr);
+}
+#define eth_hw_addr_set __kc_eth_hw_addr_set
+#endif /* eth_hw_addr_set */
+
+#if (RHEL_RELEASE_CODE && \
+     ((RHEL_RELEASE_CODE >= RHEL_RELEASE_VERSION(8,6)) && \
+      (RHEL_RELEASE_CODE < RHEL_RELEASE_VERSION(9,0))) || \
+     (RHEL_RELEASE_CODE >= RHEL_RELEASE_VERSION(9,1)))
+#define HAVE_ETHTOOL_COALESCE_EXTACK
+#endif /* RHEL >= 8.6 && RHEL < 9.0 || RHEL >= 9.1 */
+#else /* >= 5.15.0 */
+#define HAVE_ETHTOOL_COALESCE_EXTACK
+#endif /* 5.15.0 */
+
+/*****************************************************************************/
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,17,0)) || \
+    (RHEL_RELEASE_CODE && RHEL_RELEASE_CODE >= RHEL_RELEASE_VERSION(9,1))
+#define HAVE_ETHTOOL_EXTENDED_RINGPARAMS
+#endif /* >= 5.17.0 || RHEL >= 9.1 */
+
+/*****************************************************************************/
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6,1,0))
+#if (!(RHEL_RELEASE_CODE && RHEL_RELEASE_CODE >= RHEL_RELEASE_VERSION(9,2)))
+static inline void
+_kc_netif_napi_add_no_weight(struct net_device *dev, struct napi_struct *napi,
+			     int (*poll)(struct napi_struct *, int))
+{
+	return netif_napi_add(dev, napi, poll, NAPI_POLL_WEIGHT);
+}
+
+#ifdef netif_napi_add
+#undef netif_napi_add
+#endif
+#define netif_napi_add _kc_netif_napi_add_no_weight
+#endif /* RHEL < 9.2 */
+#endif /* 6.1.0 */
 
 #endif /* _KCOMPAT_H_ */

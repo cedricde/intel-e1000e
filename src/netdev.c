@@ -30,9 +30,9 @@
 #include "e1000.h"
 
 #ifdef CONFIG_E1000E_NAPI
-#define DRV_EXTRAVERSION "-custom" "-NAPI"
+#define DRV_EXTRAVERSION ".1-custom" "-NAPI"
 #else
-#define DRV_EXTRAVERSION "-custom"
+#define DRV_EXTRAVERSION ".1-custom"
 #endif
 
 #define DRV_VERSION "3.8.7" DRV_EXTRAVERSION
@@ -2313,7 +2313,7 @@ void e1000e_set_interrupt_capability(struct e1000_adapter *adapter)
 			e1000e_reset_interrupt_capability(adapter);
 		}
 		adapter->int_mode = E1000E_INT_MODE_MSI;
-		/* Fall through */
+		fallthrough;
 	case E1000E_INT_MODE_MSI:
 		if (!pci_enable_msi(adapter->pdev)) {
 			adapter->flags |= FLAG_MSI_ENABLED;
@@ -2321,7 +2321,7 @@ void e1000e_set_interrupt_capability(struct e1000_adapter *adapter)
 			adapter->int_mode = E1000E_INT_MODE_LEGACY;
 			e_err("Failed to initialize MSI interrupts.  Falling back to legacy interrupts.\n");
 		}
-		/* Fall through */
+		fallthrough;
 	case E1000E_INT_MODE_LEGACY:
 		/* Don't do anything; this is the system default */
 		break;
@@ -3564,10 +3564,10 @@ static void e1000_setup_rctl(struct e1000_adapter *adapter)
 		switch (adapter->rx_ps_pages) {
 		case 3:
 			psrctl |= PAGE_SIZE << E1000_PSRCTL_BSIZE3_SHIFT;
-			/* fall-through */
+			fallthrough;
 		case 2:
 			psrctl |= PAGE_SIZE << E1000_PSRCTL_BSIZE2_SHIFT;
-			/* fall-through */
+			fallthrough;
 		case 1:
 			psrctl |= PAGE_SIZE >> E1000_PSRCTL_BSIZE1_SHIFT;
 			break;
@@ -4168,11 +4168,11 @@ static int e1000e_config_hwtstamp(struct e1000_adapter *adapter,
 		is_l4 = true;
 		break;
 	case HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
-		/* fall-through */
 		/* For V1, the hardware can only filter Sync messages or
 		 * Delay Request messages but not both so fall-through to
 		 * time stamp all packets.
 		 */
+		fallthrough;
 #endif /* HAVE_PTP_1588_CLOCK */
 #ifdef HAVE_HWTSTAMP_FILTER_NTP_ALL
 	case HWTSTAMP_FILTER_NTP_ALL:
@@ -4547,7 +4547,7 @@ void e1000e_reset(struct e1000_adapter *adapter)
 			fc->low_water = fc->high_water - 8;
 			break;
 		}
-		/* fall-through */
+		fallthrough;
 	default:
 		hwm = min(((pba << 10) * 9 / 10),
 			  ((pba << 10) - adapter->max_frame_size));
@@ -4572,7 +4572,6 @@ void e1000e_reset(struct e1000_adapter *adapter)
 	case e1000_pch_lpt:
 	case e1000_pch_spt:
 	case e1000_pch_cnp:
-		/* fall-through */
 	case e1000_pch_tgp:
 	case e1000_pch_adp:
 
@@ -5378,7 +5377,7 @@ static int e1000_set_mac(struct net_device *netdev, void *p)
 	if (!is_valid_ether_addr((unsigned char *)(addr->sa_data)))
 		return -EADDRNOTAVAIL;
 
-	memcpy(netdev->dev_addr, addr->sa_data, netdev->addr_len);
+	eth_hw_addr_set(netdev, addr->sa_data);
 	memcpy(adapter->hw.mac.addr, addr->sa_data, netdev->addr_len);
 
 	hw->mac.ops.rar_set(&adapter->hw, adapter->hw.mac.addr, 0);
@@ -7574,7 +7573,7 @@ static void __e1000e_disable_aspm(struct pci_dev *pdev, u16 state, int locked)
 	case PCIE_LINK_STATE_L0S:
 	case PCIE_LINK_STATE_L0S | PCIE_LINK_STATE_L1:
 		aspm_dis_mask |= PCI_EXP_LNKCTL_ASPM_L0S;
-		/* fall-through - can't have L1 without L0s */
+		fallthrough; /* can't have L1 without L0s */
 	case PCIE_LINK_STATE_L1:
 		aspm_dis_mask |= PCI_EXP_LNKCTL_ASPM_L1;
 		break;
@@ -8482,7 +8481,7 @@ static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	e1000e_set_ethtool_ops(netdev);
 	netdev->watchdog_timeo = 5 * HZ;
 #ifdef CONFIG_E1000E_NAPI
-	netif_napi_add(netdev, &adapter->napi, e1000e_poll, 64);
+	netif_napi_add(netdev, &adapter->napi, e1000e_poll);
 #endif
 	strlcpy(netdev->name, pci_name(pdev), sizeof(netdev->name));
 
@@ -8636,7 +8635,7 @@ static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		dev_err(pci_dev_to_dev(pdev),
 			"NVM Read Error while reading MAC address\n");
 
-	memcpy(netdev->dev_addr, adapter->hw.mac.addr, netdev->addr_len);
+	eth_hw_addr_set(netdev, adapter->hw.mac.addr);
 #ifdef ETHTOOL_GPERMADDR
 	memcpy(netdev->perm_addr, adapter->hw.mac.addr, netdev->addr_len);
 #endif
