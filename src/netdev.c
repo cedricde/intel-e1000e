@@ -30,9 +30,9 @@
 #include "e1000.h"
 
 #ifdef CONFIG_E1000E_NAPI
-#define DRV_EXTRAVERSION "" "-NAPI"
+#define DRV_EXTRAVERSION ".1" "-NAPI"
 #else
-#define DRV_EXTRAVERSION ""
+#define DRV_EXTRAVERSION ".1"
 #endif
 
 #define DRV_VERSION "3.8.7" DRV_EXTRAVERSION
