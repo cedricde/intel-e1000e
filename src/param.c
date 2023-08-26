@@ -406,7 +406,7 @@ void e1000e_check_options(struct e1000_adapter *adapter)
 				 "%s Invalid mode - setting default\n",
 				 opt.name);
 			adapter->itr_setting = opt.def;
-			/* fall-through */
+			fallthrough;
 		case 3:
 			dev_info(pci_dev_to_dev(adapter->pdev),
 				 "%s set to dynamic conservative mode\n",
